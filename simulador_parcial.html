@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de Parcial — Android Studio + Kotlin (Unidades 1–4)</title>
+<style>
+  :root{
+    --bg:#0f172a; --card:#1e293b; --card2:#273549; --text:#e2e8f0;
+    --muted:#94a3b8; --acc:#38bdf8; --ok:#22c55e; --bad:#ef4444;
+    --warn:#f59e0b; --line:#334155;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{
+    font-family:'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+    background:linear-gradient(160deg,#0f172a 0%,#1e1b4b 100%);
+    color:var(--text); min-height:100vh; padding-bottom:60px;
+  }
+  header{
+    background:rgba(15,23,42,.85); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line); padding:18px 16px;
+    position:sticky; top:0; z-index:10; text-align:center;
+  }
+  header h1{font-size:1.15rem; letter-spacing:.3px}
+  header p{color:var(--muted); font-size:.82rem; margin-top:4px}
+  nav{display:flex; gap:8px; justify-content:center; margin-top:12px; flex-wrap:wrap}
+  nav button{
+    background:var(--card); color:var(--text); border:1px solid var(--line);
+    padding:9px 16px; border-radius:999px; cursor:pointer; font-size:.9rem;
+    transition:.15s;
+  }
+  nav button:hover{border-color:var(--acc); color:var(--acc)}
+  nav button.active{background:var(--acc); color:#082f49; border-color:var(--acc); font-weight:600}
+  main{max-width:900px; margin:0 auto; padding:20px 14px}
+  section{display:none; animation:fade .25s ease}
+  section.show{display:block}
+  @keyframes fade{from{opacity:0; transform:translateY(6px)}to{opacity:1; transform:none}}
+
+  .hero{
+    background:linear-gradient(135deg,#0ea5e9 0%,#6366f1 100%);
+    border-radius:18px; padding:26px 22px; margin-bottom:18px; color:#fff;
+  }
+  .hero h2{font-size:1.4rem; margin-bottom:8px}
+  .hero p{font-size:.95rem; opacity:.95; line-height:1.5}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:18px; cursor:pointer; transition:.15s;
+  }
+  .card:hover{border-color:var(--acc); transform:translateY(-3px)}
+  .card h3{font-size:1rem; margin-bottom:6px; color:var(--acc)}
+  .card p{font-size:.85rem; color:var(--muted); line-height:1.45}
+  .card .badge{display:inline-block; margin-top:10px; font-size:.75rem;
+    background:#0ea5e922; color:var(--acc); padding:3px 9px; border-radius:999px}
+
+  details{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    margin-bottom:12px; overflow:hidden;
+  }
+  summary{
+    padding:15px 18px; cursor:pointer; font-weight:600; font-size:.98rem;
+    list-style:none; display:flex; justify-content:space-between; align-items:center;
+  }
+  summary::after{content:'▾'; color:var(--acc); transition:.2s}
+  details[open] summary::after{transform:rotate(180deg)}
+  details[open] summary{border-bottom:1px solid var(--line)}
+  .body{padding:16px 18px; font-size:.9rem; line-height:1.65; color:#cbd5e1}
+  .body b{color:var(--acc)}
+  .body ul{margin:6px 0 12px 20px}
+  .body li{margin-bottom:5px}
+  .body code{
+    background:#0b1220; padding:2px 6px; border-radius:5px;
+    color:#7dd3fc; font-size:.86rem; font-family:Consolas,monospace;
+  }
+  pre{
+    background:#0b1220; border:1px solid var(--line); border-radius:8px;
+    padding:12px; overflow-x:auto; font-family:Consolas,monospace;
+    font-size:.85rem; line-height:1.5; color:#a5f3fc; margin:8px 0;
+    white-space:pre-wrap;
+  }
+  table{width:100%; border-collapse:collapse; font-size:.85rem; margin:8px 0}
+  th,td{border:1px solid var(--line); padding:7px 9px; text-align:left}
+  th{background:#0b1220; color:var(--acc)}
+  .tip{background:#0ea5e918; border-left:3px solid var(--acc); padding:10px 12px;
+    border-radius:0 8px 8px 0; margin:10px 0; font-size:.87rem}
+
+  /* ---- QUIZ ---- */
+  .qtop{display:flex; justify-content:space-between; align-items:center;
+    font-size:.82rem; color:var(--muted); margin-bottom:8px}
+  .bar{height:9px; background:var(--card); border-radius:999px; overflow:hidden;
+    border:1px solid var(--line); margin-bottom:18px}
+  .bar div{height:100%; background:linear-gradient(90deg,#0ea5e9,#6366f1);
+    width:0; transition:.3s}
+  .qcard{background:var(--card); border:1px solid var(--line);
+    border-radius:16px; padding:22px}
+  .tags{display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap}
+  .tag{font-size:.72rem; padding:3px 10px; border-radius:999px;
+    background:#6366f133; color:#a5b4fc; font-weight:600}
+  .tag.t2{background:#f59e0b33; color:#fcd34d}
+  .qtext{font-size:1.02rem; line-height:1.55; margin-bottom:14px}
+  .opt{
+    display:block; width:100%; text-align:left; background:var(--card2);
+    border:2px solid var(--line); color:var(--text); border-radius:10px;
+    padding:13px 15px; margin-bottom:9px; cursor:pointer; font-size:.93rem;
+    transition:.12s; line-height:1.4;
+  }
+  .opt:hover{border-color:var(--acc)}
+  .opt.sel{border-color:var(--acc); background:#0ea5e922}
+  .opt.ok{border-color:var(--ok); background:#22c55e22}
+  .opt.bad{border-color:var(--bad); background:#ef444422}
+  .opt:disabled{cursor:default}
+  .exp{
+    background:#0b1220; border-left:3px solid var(--warn); border-radius:0 8px 8px 0;
+    padding:12px 14px; margin-top:14px; font-size:.88rem; line-height:1.55;
+    color:#fde68a; display:none;
+  }
+  .exp.show{display:block}
+  .exp.good{border-color:var(--ok); color:#bbf7d0}
+  .navrow{display:flex; gap:10px; margin-top:16px}
+  .btn{
+    flex:1; padding:13px; border:none; border-radius:10px; cursor:pointer;
+    font-size:.95rem; font-weight:600; transition:.15s;
+  }
+  .btn.p{background:var(--acc); color:#082f49}
+  .btn.p:disabled{opacity:.4; cursor:not-allowed}
+  .btn.s{background:var(--card2); color:var(--text); border:1px solid var(--line)}
+  .btn:hover:not(:disabled){filter:brightness(1.1)}
+
+  .startbox{background:var(--card); border:1px solid var(--line);
+    border-radius:16px; padding:24px; text-align:center}
+  .startbox h2{margin-bottom:10px; color:var(--acc)}
+  .startbox p{color:var(--muted); font-size:.9rem; line-height:1.6; margin-bottom:16px}
+  .opt-toggle{display:flex; gap:10px; align-items:center; justify-content:center;
+    font-size:.88rem; margin-bottom:14px; color:#cbd5e1}
+  .opt-toggle input{width:17px; height:17px; accent-color:var(--acc)}
+  .startbox .btn{max-width:340px; margin:6px auto; display:block}
+  .stat{display:flex; gap:12px; justify-content:center; margin:14px 0; flex-wrap:wrap}
+  .stat div{background:var(--card2); border:1px solid var(--line); border-radius:10px;
+    padding:10px 16px; font-size:.82rem; text-align:center}
+  .stat b{display:block; font-size:1.3rem; color:var(--acc)}
+
+  .score{width:160px; height:160px; border-radius:50%; margin:6px auto 14px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    border:8px solid var(--acc); background:#0b1220}
+  .score.pass{border-color:var(--ok)} .score.fail{border-color:var(--bad)}
+  .score b{font-size:2.3rem} .score span{font-size:.8rem; color:var(--muted)}
+  .unitrow{display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:.85rem}
+  .unitrow span:first-child{width:120px; color:#cbd5e1}
+  .unitbar{flex:1; height:12px; background:var(--card); border-radius:999px;
+    overflow:hidden; border:1px solid var(--line)}
+  .unitbar i{display:block; height:100%; background:var(--ok)}
+  .wrong{background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:14px; margin-bottom:10px; font-size:.87rem; line-height:1.5}
+  .wrong .wq{font-weight:600; margin-bottom:6px}
+  .wrong .wa{color:#86efac} .wrong .wr{color:#fca5a5}
+  .wrong .we{color:var(--muted); font-size:.83rem; margin-top:6px}
+  footer{text-align:center; color:var(--muted); font-size:.78rem; margin-top:34px}
+  @media(max-width:520px){ header h1{font-size:1rem} .qcard{padding:16px} }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📱 Simulador de Parcial — Android Studio + Kotlin con Compose</h1>
+  <p>Curso Android Basics · Unidades 1–4 · 50 preguntas con corrección automática</p>
+  <nav>
+    <button id="nav-home" class="active" onclick="show('home')">🏠 Inicio</button>
+    <button id="nav-teo" onclick="show('teo')">📖 Teoría resumida</button>
+    <button id="nav-quiz" onclick="show('quiz')">📝 Simulacro 50</button>
+    <button id="nav-res" onclick="show('res')">📊 Resultados</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ============ INICIO ============ -->
+<section id="home" class="show">
+  <div class="hero">
+    <h2>Prepárate para el parcial</h2>
+    <p>Estudia la teoría resumida, haz el simulacro de 50 preguntas (igual que el de tu
+    profesor) y repite solo las que fallaste hasta dominarlo todo.</p>
+  </div>
+  <div class="grid">
+    <div class="card" onclick="show('teo')">
+      <h3>📖 Teoría desde cero</h3>
+      <p>Fundamentos de programación, Kotlin, Compose, colecciones, ViewModel y Navigation.</p>
+      <span class="badge">5 bloques</span>
+    </div>
+    <div class="card" onclick="startQuiz('all')">
+      <h3>📝 Simulacro completo</h3>
+      <p>50 preguntas: teoría, código y "¿qué imprime?". Corrección y explicación al instante.</p>
+      <span class="badge">60 min recomendados</span>
+    </div>
+    <div class="card" onclick="startQuiz('wrong')">
+      <h3>🔁 Repasar falladas</h3>
+      <p id="wrongCard">Repites solo las preguntas que fallaste en el último simulacro.</p>
+      <span class="badge" id="wrongBadge">0 pendientes</span>
+    </div>
+  </div>
+  <div class="tip" style="margin-top:16px">
+    <b>Truco para "¿qué imprime?":</b> haz una tabla con las variables y ve línea por línea.
+    Nunca adivines: recorre el código como si fueras la computadora.
+  </div>
+</section>
+
+<!-- ============ TEORÍA ============ -->
+<section id="teo">
+  <details open>
+    <summary>0 · Fundamentos de programación (si ahí te falló el parcial)</summary>
+    <div class="body">
+      <p>Programar = dar <b>instrucciones en orden</b> a la computadora.</p>
+      <ul>
+        <li><b><code>val</code></b> = no cambia (inmutable). <b><code>var</code></b> = sí cambia.</li>
+        <li>Tipos: <code>Int</code> (entero), <code>Double</code> (decimal), <code>String</code> (texto), <code>Boolean</code> (true/false), <code>Char</code> (1 carácter).</li>
+        <li><code>10 / 3</code> = <b>3</b> (división entera corta decimal) · <code>10.0 / 3</code> = 3.33</li>
+        <li><code>10 % 3</code> = <b>1</b> (módulo = resto de la división)</li>
+        <li><code>=</code> asigna · <code>==</code> compara → <code>if (x = 5)</code> es <b>error</b>.</li>
+        <li>Lógicos: <code>&&</code> (y), <code>||</code> (o), <code>!</code> (no).</li>
+        <li><b><code>if</code> puede devolver valor</b>: <code>val r = if (c) "sí" else "no"</code>.</li>
+        <li>Ciclos: <code>for (i in 1..5)</code> incluye el 5 · <code>until</code> excluye · <code>downTo</code> baja · <code>step</code> salta.</li>
+        <li>Función: <code>fun nombre(p: Tipo): Tipo { return ... }</code>; sin retorno = <code>Unit</code>.</li>
+        <li>Plantillas: <code>"Hola $nombre"</code> y <code>"Suma ${a + b}"</code>.</li>
+      </ul>
+      <div class="tip"><b>Ejemplo resuelto:</b>
+<pre>var total = 0
+for (i in 1..5) { if (i % 2 == 0) total += i }
+println(total)   // pares: 2 + 4 = 6</pre></div>
+    </div>
+  </details>
+
+  <details>
+    <summary>1 · Unidad 1 — Kotlin + Android Studio + primeros componibles</summary>
+    <div class="body">
+      <ul>
+        <li><b>Android Studio</b> = IDE; <b>AVD Manager</b> = emulador; <b>Logcat</b> = consola; <b>Gradle</b> = compilación (<code>build.gradle</code>).</li>
+        <li><b><code>MainActivity</code></b> es la pantalla de entrada; se declara en <code>AndroidManifest.xml</code>.</li>
+        <li>Compose es <b>declarativo</b>: describes <b>qué</b> mostrar, no cómo construirlo. Todo es Kotlin (sin XML).</li>
+        <li>Todo componible: anotación <b><code>@Composable</code></b> + nombre en <b>PascalCase</b> + no devuelve valores.</li>
+        <li><code>Text(text = ...)</code> · <code>Image(painter = painterResource(R.drawable.x), contentDescription = ...)</code></li>
+        <li><b><code>contentDescription</code></b> = accesibilidad (obligatorio; <code>null</code> solo si es decorativa).</li>
+        <li><code>Modifier.padding(16.dp)</code> · <code>.fillMaxWidth()</code> · <code>.size()</code> — <b>el orden importa</b>.</li>
+        <li><code>Column</code> (vertical), <code>Row</code> (horizontal), <code>Box</code> (capas).</li>
+        <li><b>Recomposición</b> = redibujo automático cuando cambia el estado.</li>
+        <li><code>@Preview</code> = ver la UI sin ejecutar la app. La app se envuelve en <code>MaterialTheme</code>.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details>
+    <summary>2 · Unidad 2 — when, nulabilidad, clases, lambdas y ESTADO</summary>
+    <div class="body">
+      <p><b><code>when</code></b> (como switch, sin <code>break</code>); si es expresión necesita <code>else</code>; acepta <code>in 1..5</code> e <code>is Tipo</code>.</p>
+      <p><b>Nulabilidad</b> — tabla clave:</p>
+      <table>
+        <tr><th>Signo</th><th>Nombre</th><th>Qué hace</th></tr>
+        <tr><td><code>String?</code></td><td>nullable</td><td>el tipo admite <code>null</code></td></tr>
+        <tr><td><code>a?.length</code></td><td>safe call</td><td>si es null → null; si no → ejecuta</td></tr>
+        <tr><td><code>a ?: "x"</code></td><td>Elvis</td><td>si es null → valor por defecto</td></tr>
+        <tr><td><code>a!!</code></td><td>assertion</td><td>asume que no es null (¡explota si lo es!)</td></tr>
+      </table>
+      <p><b>Clases:</b> <code>class Persona(val nombre: String, var edad: Int)</code> — la clase es el plano, el objeto es la instancia. Métodos dentro de llaves; <code>this</code> = objeto actual.</p>
+      <p><b>Lambdas y tipos de función:</b>
+<pre>val doble: (Int) -> Int = { it * 2 }
+listOf(1,2,3).filter { it > 1 }   // it = parámetro implícito
+// última expresión = valor de retorno</pre></p>
+      <p><b>ESTADO (lo más importante):</b>
+<pre>var count by remember { mutableStateOf(0) }   // ✅ la UI se actualiza
+var count = 0                                 // ❌ nunca se redibuja</pre></p>
+      <ul>
+        <li><code>remember</code> conserva el valor entre recomposiciones.</li>
+        <li><b>State hoisting</b>: el estado vive en el padre y baja por parámetros.</li>
+        <li>Pruebas: <code>assertEquals(valorEsperado, valorObtenido)</code> — <b>el orden importa</b>.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details>
+    <summary>3 · Unidad 3 — Colecciones, funciones de orden superior y Material</summary>
+    <div class="body">
+      <p><b>Listas:</b> <code>listOf</code> = inmutable (NO tiene <code>add</code>) · <code>mutableListOf</code> = sí cambia.</p>
+      <table>
+        <tr><th>Operación</th><th>Ejemplo</th></tr>
+        <tr><td>tamaño</td><td><code>lista.size</code></td></tr>
+        <tr><td>elemento</td><td><code>lista[0]</code> (empieza en 0)</td></tr>
+        <tr><td>¿contiene?</td><td><code>"x" in lista</code> / <code>contains()</code></td></tr>
+        <tr><td>Map</td><td><code>mapOf("Ana" to 25)["Ana"]</code></td></tr>
+        <tr><td>Set</td><td><code>setOf(1,1,2)</code> → {1,2} sin duplicados</td></tr>
+      </table>
+      <p><b>Funciones de orden superior (favoritas del examen):</b></p>
+      <table>
+        <tr><th>Función</th><th>Hace</th><th>Ejemplo</th><th>Resultado</th></tr>
+        <tr><td><code>map</code></td><td>transforma</td><td><code>[1,2,3].map { it*10 }</code></td><td>[10,20,30]</td></tr>
+        <tr><td><code>filter</code></td><td>selecciona</td><td><code>[1,2,3].filter { it&gt;1 }</code></td><td>[2,3]</td></tr>
+        <tr><td><code>sumOf</code></td><td>suma</td><td><code>[1,2].sumOf { it*2 }</code></td><td>6</td></tr>
+        <tr><td><code>count</code></td><td>cuenta</td><td><code>[1,2,3].count { it&gt;2 }</code></td><td>1</td></tr>
+        <tr><td><code>forEach</code></td><td>recorre</td><td>no devuelve nada</td><td>—</td></tr>
+      </table>
+      <div class="tip"><b>map vs filter:</b> <code>map</code> devuelve <b>la misma cantidad</b> transformada;
+      <code>filter</code> devuelve <b>solo los que cumplen</b>.</div>
+      <p><b>Compose:</b> <code>LazyColumn</code> / <code>LazyVerticalGrid</code> dibujan solo lo visible →
+      <code>items(lista) { item -> ... }</code>, con <code>contentPadding</code> y <code>key = { it.id }</code>.</p>
+      <p><b>MaterialTheme</b> = 3 pilares: <code>colorScheme</code> (colores), <code>typography</code> (textos),
+      <code>shapes</code> (esquinas). Táctil mínimo 48 dp. Animación: <code>animateFloatAsState</code>.</p>
+      <p><b><code>data class</code></b> = igualdad por valor + <code>copy()</code> gratis. <b><code>object</code></b> = singleton.
+      <b>Extensión</b>: <code>fun String.mayus() = ...</code>.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>4 · Unidad 4 — Ciclo de vida, ViewModel, StateFlow, Navigation</summary>
+    <div class="body">
+      <p><b>Ciclo de vida:</b> <code>onCreate</code> → <code>onStart</code> → <code>onResume</code> → (en uso) →
+      <code>onPause</code> → <code>onStop</code> → <code>onDestroy</code>.</p>
+      <ul>
+        <li><b><code>onCreate</code></b> = inicializar la UI (<code>setContent</code>).</li>
+        <li>Al <b>rotar</b>, la Activity se destruye y recrea → las variables normales <b>se pierden</b>.</li>
+        <li><b>ViewModel</b> = guarda el estado y <b>sobrevive</b> a la rotación.</li>
+      </ul>
+      <p><b>Arquitectura por capas:</b> UI (Composables + ViewModel) · Dominio (use cases) · Datos (repositorios).</p>
+      <p><b>UDF (flujo unidireccional):</b> estado ↓ de ViewModel a UI · eventos ↑ de UI a ViewModel.</p>
+      <p><b>Patrón ViewModel completo:</b>
+<pre>class Vm : ViewModel() {
+    private val _uiState = MutableStateFlow(Estado())          // privado
+    val uiState: StateFlow&lt;Estado&gt; = _uiState.asStateFlow()    // público
+
+    fun accion() {
+        _uiState.value = _uiState.value.copy(campo = 1)  // actualizar
+    }
+}
+
+// En la UI:
+val state by viewModel.uiState.collectAsState()  // ← conectar con Compose</pre></p>
+      <p><b>Navigation:</b>
+<pre>val nav = rememberNavController()
+NavHost(nav, startDestination = "inicio") {
+    composable("inicio")      { Inicio(onIr = { nav.navigate("detalle") }) }
+    composable("detalle")     { Detalle(onVolver = { nav.popBackStack() }) }
+    composable("pedido/{id}") { /* backStackEntry.arguments */ }
+}</pre></p>
+      <ul>
+        <li><code>navigate</code> = apila (avanza) · <code>popBackStack</code> = desapila (atrás).</li>
+        <li>Argumentos: <code>{ruta}</code> obligatorio, <code>?clave=</code> query; tipos con <code>navArgument</code>.</li>
+        <li><b>Ventana:</b> Compact &lt;600 dp (teléfono) · Medium ≥600 · Expanded ≥840 → panel lateral.</li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<!-- ============ QUIZ ============ -->
+<section id="quiz">
+  <div id="quizStart" class="startbox">
+    <h2>📝 Simulacro — 50 preguntas</h2>
+    <p>Teoría + código + "¿qué imprime?", igual que el parcial de tu profesor.
+    Las opciones se mezclan en cada intento.</p>
+    <div class="opt-toggle">
+      <input type="checkbox" id="fb" checked>
+      <label for="fb">Feedback inmediato (ver explicación al responder)</label>
+    </div>
+    <button class="btn p" onclick="startQuiz('all')">▶ COMENZAR SIMULACRO (50)</button>
+    <button class="btn s" id="btnWrong" onclick="startQuiz('wrong')">🔁 REPASAR FALLADAS</button>
+    <div class="stat">
+      <div><b id="stBest">—</b>mejor puntaje</div>
+      <div><b id="stTries">0</b>intentos</div>
+      <div><b id="stWrong">0</b>falladas pendientes</div>
+    </div>
+  </div>
+
+  <div id="quizRun" style="display:none">
+    <div class="qtop">
+      <span id="qPos">Pregunta 1 / 50</span>
+      <span id="qUnit">—</span>
+    </div>
+    <div class="bar"><div id="qBar"></div></div>
+    <div class="qcard">
+      <div class="tags" id="qTags"></div>
+      <div class="qtext" id="qText"></div>
+      <pre id="qCode" style="display:none"></pre>
+      <div id="qOpts"></div>
+      <div class="exp" id="qExp"></div>
+      <div class="navrow">
+        <button class="btn s" id="btnPrev" onclick="prevQ()">← Anterior</button>
+        <button class="btn p" id="btnNext" onclick="nextQ()" disabled>Siguiente →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RESULTADOS ============ -->
+<section id="res">
+  <div id="resEmpty" class="startbox">
+    <h2>📊 Aún no hay resultados</h2>
+    <p>Primero completa un simulacro y aquí verás tu puntaje, tus debilidades por unidad
+    y la lista de preguntas falladas para repasar.</p>
+    <button class="btn p" onclick="startQuiz('all')">▶ COMENZAR SIMULACRO</button>
+  </div>
+  <div id="resFull" style="display:none">
+    <div class="score" id="scoreCircle"><b id="scoreNum">0</b><span id="scoreTxt">0/50</span></div>
+    <div id="verdict" style="text-align:center; font-size:1rem; margin-bottom:18px"></div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); margin-bottom:18px">
+      <div class="card" style="cursor:default"><h3 id="rOk">0</h3><p>Correctas</p></div>
+      <div class="card" style="cursor:default"><h3 id="rBad" style="color:var(--bad)">0</h3><p>Incorrectas</p></div>
+      <div class="card" style="cursor:default"><h3 id="rTime">—</h3><p>Tiempo</p></div>
+    </div>
+    <h3 style="margin:18px 0 10px; color:var(--acc)">📚 Rendimiento por unidad</h3>
+    <div id="unitStats"></div>
+    <div class="navrow" style="margin-bottom:18px">
+      <button class="btn p" onclick="startQuiz('wrong')">🔁 REPASAR FALLADAS</button>
+      <button class="btn s" onclick="startQuiz('all')">🔄 NUEVO SIMULACRO</button>
+    </div>
+    <h3 style="margin:18px 0 10px; color:var(--bad)">❌ Preguntas falladas (con explicación)</h3>
+    <div id="wrongList"></div>
+  </div>
+</section>
+
+</main>
+
+<footer>Simulador de estudio · Curso Android Basics with Compose · Unidades 1–4</footer>
+
+<script>
+/* ================= DATOS: 50 PREGUNTAS ================= */
+const ALL = [
+{id:1,u:"Fundamentos",t:"mc",q:"¿Qué palabra clave define una función en Kotlin?",
+ o:["function","fun","def","func"],a:1,e:"En Kotlin las funciones se declaran con <b>fun</b>: fun sumar(a: Int, b: Int): Int."},
+{id:2,u:"Fundamentos",t:"mc",q:"¿Cuál de estas declaraciones es INCORRECTA?",
+ o:["val x = 5","var y = 5; y = 10","var z = 5; z = 10","val w = 5; w = 10"],a:3,
+ e:"<b>val</b> es inmutable: no se puede reasignar, así que 'val w = 5; w = 10' no compila. Usa <b>var</b> si el valor cambia."},
+{id:3,u:"Fundamentos",t:"mc",q:"¿Qué imprime?",c:"println(10 / 3)",
+ o:["3.33","3","4","Error de compilación"],a:1,
+ e:"10 y 3 son Int: la división entre enteros da entero y <b>corta</b> el decimal → 3. Para 3.33 sería 10.toDouble() / 3."},
+{id:4,u:"Unidad 2",t:"mc",q:"¿Qué operador permite acceder a un miembro SOLO si el valor no es null?",
+ o:["!!",":?","?.","?!. pregunta"],a:2,
+ e:"<b>?. </b> (safe call): si es null devuelve null en vez de fallar. '?:' da un valor por defecto y '!!' asegura (y revienta si es null)."},
+{id:5,u:"Unidad 2",t:"vf",q:"El operador !! es seguro porque evita excepciones en tiempo de ejecución.",
+ o:["Verdadero","Falso"],a:1,
+ e:"FALSO. !! <b>provoca</b> NullPointerException si el valor es null. Solo se usa cuando se está 100% seguro de que no es null."},
+{id:6,u:"Fundamentos",t:"mc",q:"¿Qué imprime println(17 % 5)?",
+ o:["3","2","3.4","0"],a:1,
+ e:"% es el MÓDULO (resto de la división): 17 = 3×5 + <b>2</b> → resto 2."},
+{id:7,u:"Unidad 3",t:"mc",q:"¿Cuál es la diferencia entre map y filter?",
+ o:["No hay diferencia.","map transforma cada elemento; filter selecciona los que cumplen la condición.","filter transforma; map selecciona.","map solo funciona con Strings."],a:1,
+ e:"<b>map</b> devuelve la MISMA cantidad transformada; <b>filter</b> devuelve SOLO los que cumplen (puede reducir)."},
+{id:8,u:"Compose",t:"mc",q:"¿Qué hace remember { mutableStateOf(0) }?",
+ o:["Guarda el valor en disco.","Crea una variable que se reinicia en cada recomposición.","Conserva el valor entre recomposiciones.","Bloquea el hilo principal."],a:2,
+ e:"remember mantiene el estado <b>entre recomposiciones</b>; sin él, el valor se perdería cada vez que Compose redibuja."},
+{id:9,u:"Compose",t:"vf",q:"Una función composable puede devolver un Int como valor de retorno.",
+ o:["Verdadero","Falso"],a:1,
+ e:"FALSO. Los componibles no devuelven valores (Unit) y deben estar anotados con @Composable y en PascalCase."},
+{id:10,u:"Unidad 1",t:"mc",q:"¿Qué significa que Compose sea DECLARATIVO?",
+ o:["Describes QUÉ debe mostrarse y Compose decide cómo dibujarlo.","Describes paso a paso cómo construir la interfaz.","Usas archivos XML para cada pantalla.","No necesitas escribir Kotlin."],a:0,
+ e:"Declarativo = describes el <b>resultado deseado</b> ('qué'), no los pasos de construcción ('cómo'). El código es puro Kotlin."},
+{id:11,u:"Unidad 4",t:"mc",q:"¿Cuál es el orden correcto del ciclo de vida de la Activity?",
+ o:["onCreate → onStart → onResume","onStart → onCreate → onResume","onResume → onCreate → onStart","onCreate → onResume → onStart"],a:0,
+ e:"Crear → visible → en primer plano (interactiva). Al salir: onPause → onStop → onDestroy."},
+{id:12,u:"Unidad 4",t:"mc",q:"¿Qué ocurre con las variables normales de la Activity al ROTAR el dispositivo?",
+ o:["Se conservan igual.","Se pierden porque la Activity se destruye y recrea.","Se convierten en constantes.","Android las guarda en el ViewModel automáticamente."],a:1,
+ e:"La rotación destruye y recrea la Activity → las variables simples se reinician. Por eso se usa el <b>ViewModel</b>, que sobrevive."},
+{id:13,u:"Unidad 4",t:"mc",q:"¿Para qué sirve el ViewModel?",
+ o:["Para dibujar la interfaz.","Para conservar datos y estado sobreviviendo a las rotaciones de pantalla.","Para conectar con la base de datos.","Para reemplazar a la Activity."],a:1,
+ e:"El ViewModel <b>guarda el estado de la UI</b> y no se destruye al girar la pantalla. No dibuja (eso lo hacen los componibles)."},
+{id:14,u:"Unidad 4",t:"mc",q:"¿Qué es UDF (flujo unidireccional de datos)?",
+ o:["La UI modifica los datos directamente.","El estado fluye hacia abajo (ViewModel → UI) y los eventos hacia arriba (UI → ViewModel).","Los datos van del repositorio al XML.","Todo se guarda en SharedPreferences."],a:1,
+ e:"Estado ↓ y eventos ↑. La UI solo dibuja y manda eventos; el ViewModel expone el estado y ejecuta la lógica."},
+{id:15,u:"Unidad 3",t:"mc",q:"¿Qué función de colecciones devuelve la MISMA cantidad de elementos transformados?",
+ o:["filter","count","map","any"],a:2,
+ e:"<b>map</b> transforma uno a uno (mismo tamaño). filter selecciona (tamaño variable)."},
+{id:16,u:"Unidad 3",t:"mc",q:"¿Cuál de estas listas PERMITE usar add()?",
+ o:["listOf(1, 2)","mutableListOf(1, 2)","setOf(1, 2)","mapOf()"],a:1,
+ e:"listOf crea una lista INMUTABLE. Para agregar/quitar necesitas <b>mutableListOf</b>."},
+{id:17,u:"Unidad 4",t:"mc",q:"¿Qué hace navController.navigate(\"detalle\")?",
+ o:["Cierra la app.","Apila la pantalla 'detalle' (avanza).","Vuelve a la pantalla anterior.","Borra toda la pila."],a:1,
+ e:"navigate() <b>empuja</b> en la pila de retroceso (back stack). Para volver se usa popBackStack()."},
+{id:18,u:"Unidad 4",t:"mc",q:"¿En qué método se inicializa la UI con setContent{}?",
+ o:["onStart","onResume","onCreate","onDestroy"],a:2,
+ e:"<b>onCreate</b> es el punto de inicialización: ahí se llama super.onCreate y setContent { }."},
+{id:19,u:"Unidad 1",t:"mc",q:"¿Para qué sirve contentDescription en Image?",
+ o:["Para dar el tamaño de la imagen.","Para la accesibilidad (lectores de pantalla).","Para comprimir la imagen.","No hace nada."],a:1,
+ e:"Describe la imagen para personas con discapacidad visual. Es obligatorio salvo en imágenes decorativas (null)."},
+{id:20,u:"Unidad 4",t:"mc",q:"¿Qué clase de tamaño de ventana corresponde a un teléfono en vertical?",
+ o:["Expanded","Medium","Compact","Large"],a:2,
+ e:"<b>Compact</b> (< 600 dp) = teléfono vertical. Medium ≥600 (tablet vertical). Expanded ≥840 → panel lateral."},
+
+{id:21,u:"Fundamentos",t:"mc",q:"¿Qué imprime?",c:"fun main() {\n    var x = 5\n    val y = x * 2\n    x = y + 1\n    println(\"$x $y\")\n}",
+ o:["11 10","10 10","11 11","10 11"],a:0,
+ e:"y = 5*2 = 10; luego x = 10+1 = 11 → imprime x y y: <b>11 10</b>."},
+{id:22,u:"Fundamentos",t:"mc",q:"¿Qué imprime?",c:"var total = 0\nfor (i in 1..5) {\n    if (i % 2 == 0) total += i\n}\nprintln(total)",
+ o:["6","9","12","5"],a:0,
+ e:"Suma solo los PARES de 1 a 5: 2 + 4 = <b>6</b>."},
+{id:23,u:"Fundamentos",t:"mc",q:"¿Qué imprime?",c:"println(\"a\" + 1 + 2)\nprintln(1 + 2 + \"a\")",
+ o:["a12 y 3a","3a y a12","12a y a3","a12 y a3"],a:0,
+ e:"El + concatena si el PRIMERO es String (a+1+2 → texto 'a12'); si empieza con Int suma primero (1+2=3 y luego '3a')."},
+{id:24,u:"Unidad 3",t:"mc",q:"¿Qué imprime?",c:"val lista = listOf(1, 2, 3, 4, 5)\nprintln(lista.filter { it > 3 }.map { it * 10 })",
+ o:["[40, 50]","[4, 5]","[10, 20, 30, 40, 50]","[40, 50, 60]"],a:0,
+ e:"filter deja [4,5] y map multiplica ×10 → <b>[40, 50]</b>."},
+{id:25,u:"Unidad 2",t:"mc",q:"¿Qué imprime?",c:"val nombre: String? = null\nprintln(nombre?.length ?: \"sin nombre\")",
+ o:["sin nombre","null","0","Error de compilación"],a:0,
+ e:"null?.length = null; el operador Elvis ?: sustituye por el valor por defecto → <b>sin nombre</b>."},
+{id:26,u:"Fundamentos",t:"mc",q:"¿Qué imprime?",c:"var i = 3\nwhile (i > 0) {\n    print(\"$i \")\n    i--\n}\nprintln(\"fin\")",
+ o:["3 2 1 fin","3 2 1","1 2 3 fin","fin"],a:0,
+ e:"i baja de 3 a 1 (cuando i=0 la condición es falsa y sale) → <b>3 2 1 fin</b>."},
+{id:27,u:"Unidad 3",t:"mc",q:"¿Qué imprime?",c:"val numeros = listOf(4, 1, 3, 2)\nprintln(numeros.sorted())\nprintln(numeros.sortedBy { -it })\nprintln(numeros.count { it > 2 })",
+ o:["[1, 2, 3, 4] / [4, 3, 2, 1] / 2","[1, 2, 3, 4] / [1, 2, 3, 4] / 3","[4, 3, 2, 1] / [4, 3, 2, 1] / 2","[1, 2, 3, 4] / [4, 3, 2, 1] / 3"],a:0,
+ e:"sorted = ascendente; sortedBy { -it } = descendente; count(it>2) = 4 y 3 → <b>2</b>."},
+{id:28,u:"Unidad 2",t:"mc",q:"¿Qué imprime?",c:"class Caja(val contenido: String) {\n    fun mostrar() = println(\"Caja: $contenido\")\n}\n\nval c = Caja(\"Kotlin\")\nc.mostrar()",
+ o:["Caja: Kotlin","Kotlin","Caja: ","Error: no se puede crear la clase"],a:0,
+ e:"Se crea el objeto con Caja(\"Kotlin\") y el método muestra el texto con la propiedad contenido."},
+{id:29,u:"Unidad 3",t:"mc",q:"¿Qué imprime?",c:"val edades = mapOf(\"Ana\" to 25, \"Luis\" to 30, \"Zoe\" to 20)\nprintln(edades.getOrDefault(\"Juan\", -1))\nprintln(edades.filter { it.value > 22 }.keys)",
+ o:["-1 / [Ana, Luis]","Juan / [Ana, Luis]","-1 / []","30 / [Ana, Luis]"],a:0,
+ e:"Juan no existe → -1 (valor por defecto). Filtra valores >22: Ana(25) y Luis(30)."},
+{id:30,u:"Unidad 2",t:"mc",q:"¿Qué imprime?",c:"val doble: (Int) -> Int = { it * 2 }\nval suma = doble(3) + doble(4)\nprintln(suma)",
+ o:["14","7","21","10"],a:0,
+ e:"doble(3)=6 y doble(4)=8 → 6 + 8 = <b>14</b>."},
+{id:31,u:"Fundamentos",t:"mc",q:"¿Qué imprime?",c:"var texto = \"\"\nfor (i in 1..4) {\n    texto += i\n}\nprintln(texto)\nprintln(texto.length)",
+ o:["1234 / 4","1234 / 1234","1 2 3 4 / 4","4 / 4"],a:0,
+ e:"Se concatena como texto: \"\"+1+2+3+4 = \"1234\"; su longitud es 4."},
+{id:32,u:"Unidad 3",t:"mc",q:"¿Qué imprime?",c:"data class Punto(val x: Int, val y: Int)\n\nval a = Punto(1, 2)\nval b = a.copy(x = 10)\nprintln(a)\nprintln(b)\nprintln(a == Punto(1, 2))",
+ o:["Punto(x=1, y=2) / Punto(x=10, y=2) / true","Punto(x=1, y=2) / Punto(x=1, y=2) / true","Punto(x=1, y=2) / Punto(x=10, y=2) / false","1 / 10 / true"],a:0,
+ e:"copy cambia solo x → b es (10,2). La data class compara por <b>valores</b>, no por referencia → true."},
+{id:33,u:"Unidad 3",t:"mc",q:"¿Qué imprime?",c:"val palabras = listOf(\"sol\", \"mar\", \"cielo\", \"mar\")\nprintln(palabras.distinct().size)\nprintln(palabras.count { it == \"mar\" })",
+ o:["3 / 2","4 / 2","3 / 1","2 / 2"],a:0,
+ e:"distinct() elimina el 'mar' repetido → 3 elementos. count() sí cuenta los 2 'mar'."},
+{id:34,u:"Unidad 2",t:"mc",q:"¿Qué imprime?",c:"val x = 7\nval resultado = when {\n    x % 2 == 0 -> \"par\"\n    x > 5      -> \"impar grande\"\n    else       -> \"otro\"\n}\nprintln(resultado)",
+ o:["impar grande","par","otro","impar"],a:0,
+ e:"7%2 != 0 → la primera condición falla; 7>5 → SÍ → 'impar grande'. El when se evalúa en orden."},
+{id:35,u:"Unidad 3",t:"mc",q:"¿Qué imprime?",c:"val letras = listOf('a', 'b', 'c')\nfor ((i, l) in letras.withIndex()) {\n    print(\"$i$l \")\n}",
+ o:["0a 1b 2c ","1a 2b 3c ","abc","0 1 2 "],a:0,
+ e:"withIndex() da (índice, valor): índices 0,1,2 → <b>0a 1b 2c</b>."},
+
+{id:36,u:"Compose",t:"mc",q:"Completa la función componible:",c:"@Composable\nfun Saludo(nombre: String) {\n    ________(\"Hola, $nombre\")\n}",
+ o:["Text","Label","TextView","Print"],a:0,
+ e:"En Compose se usa <b>Text()</b>. TextView es del sistema viejo (XML/Views)."},
+{id:37,u:"Compose",t:"mc",q:"¿Cuál es el ERROR de este código?",c:"@Composable\nfun Contador() {\n    var count = 0\n    Button(onClick = { count++ }) {\n        Text(\"Veces: $count\")\n    }\n}",
+ o:["Falta @Composable en Button.","El estado no usa remember { mutableStateOf() }, así que la UI nunca se actualiza.","count++ no existe en Kotlin.","Text necesita dos parámetros."],a:1,
+ e:"'var count = 0' es una variable normal: el clic la cambia, pero Compose no la observa → sin recomposición. Correcto: var count by remember { mutableStateOf(0) }."},
+{id:38,u:"Compose",t:"mc",q:"Completa el estado:",c:"var count by ____________ { mutableStateOf(0) }",
+ o:["remember","rememberSaveable","state","save"],a:0,
+ e:"<b>remember { mutableStateOf(x) }</b> crea estado observable que persiste entre recomposiciones."},
+{id:39,u:"Compose",t:"vf",q:"Modifier.padding(16.dp).background(Color.Red) pinta de rojo TODO el ancho incluyendo el padding.",
+ o:["Verdadero","Falso"],a:1,
+ e:"FALSO. El orden importa: con padding PRIMERO, el fondo solo cubre el contenido interior. Para pintar todo sería .background(...).padding(...)."},
+{id:40,u:"Compose",t:"mc",q:"¿Qué valor muestra la UI tras 3 clics? (estado inicial 0)",c:"var count by remember { mutableStateOf(0) }\nButton(onClick = { count += 5 }) { Text(\"$count\") }\n// el usuario hace clic 3 veces",
+ o:["15","5","3","0"],a:0,
+ e:"Cada clic suma 5: 0 → 5 → 10 → <b>15</b>. El estado redibuja el Text automáticamente."},
+{id:41,u:"Unidad 4",t:"mc",q:"¿Cuál es la forma CORRECTA de obtener el estado del ViewModel en la UI?",
+ o:["val state = viewModel.uiState","val state by viewModel.uiState.collectAsState()","val state = viewModel.uiState.collect()","val state = remember { viewModel.uiState }"],a:1,
+ e:"collectAsState() convierte el StateFlow en estado de Compose y lo hace observable (recomposición)."},
+{id:42,u:"Unidad 4",t:"mc",q:"¿Qué línea actualiza CORRECTAMENTE el estado dentro del ViewModel?",
+ o:["_uiState.value = _uiState.value.copy(campo = 1)","var uiState = UiState()  (haciendo uiState público var)","notifyUI()","recompose()"],a:0,
+ e:"Se actualiza el MutableStateFlow privado con .value, copiando el data class con <b>copy()</b> (estados inmutables)."},
+{id:43,u:"Unidad 4",t:"mc",q:"Completa la navegación con parámetro:",c:"navController.navigate(\"pedido____$fecha\")",
+ o:["/","?","#",":"],a:1,
+ e:"Se usa <b>query parameter</b>: navigate(\"pedido?fecha=$fecha\"). Con llaves sería ruta con argumento: \"pedido/{fecha}\"."},
+{id:44,u:"Unidad 4",t:"mc",q:"¿Qué hace navController.popBackStack()?",
+ o:["Navega hacia adelante.","Vuelve a la pantalla anterior (desapila).","Cierra la app.","Reinicia el ViewModel."],a:1,
+ e:"popBackStack() saca la pantalla actual de la pila y muestra la anterior (equivalente al botón Atrás)."},
+{id:45,u:"Unidad 4",t:"mc",q:"¿Cuál es el startDestination?",c:"NavHost(navController, startDestination = \"lista\") {\n    composable(\"lista\") { PantallaLista() }\n    composable(\"detalle\") { PantallaDetalle() }\n}",
+ o:["detalle","lista","NavHost","ninguno"],a:1,
+ e:"startDestination = <b>\"lista\"</b>: es la primera pantalla que se muestra al abrir la app."},
+{id:46,u:"Unidad 2",t:"mc",q:"¿Qué prueba unitaria de propina es CORRECTA?",
+ o:["assertEquals(2.0, calcularPropina(10.0, 20), 0.001)","assertEquals(calcularPropina(10.0, 20), 2.0, 0.001)","assert(calcularPropina == 2.0)","println(2.0)"],a:0,
+ e:"El orden de JUnit es <b>(esperado, obtenido, tolerancia)</b>. Así el mensaje de error indica qué salió mal."},
+{id:47,u:"Unidad 3",t:"mc",q:"¿Qué produce este LazyColumn? (lista = [\"sol\", \"mar\"])",c:"LazyColumn {\n    items(lista) { item -> Text(item) }\n}",
+ o:["Dos Text (uno por elemento).","Un solo Text.","Error de compilación.","Nada."],a:0,
+ e:"items() itera la lista y llama al bloque por cada elemento → dos Text apilados verticalmente."},
+{id:48,u:"Unidad 1",t:"mc",q:"¿Cuál es la convención de nombres y requisito de un composable?",
+ o:["camelCase + @Composable","PascalCase + @Composable","snake_case + @Composable","PascalCase sin anotación"],a:1,
+ e:"Mayúscula inicial (PascalCase) y anotación <b>@Composable</b>; sin paréntesis de retorno."},
+{id:49,u:"Unidad 4",t:"mc",q:"¿Qué WindowSizeClass mostraría un panel lateral con contenido?",
+ o:["Compact","Medium","Expanded","Ninguna: siempre la misma UI"],a:2,
+ e:"En pantallas <b>Expanded</b> (≥840 dp) se usa panel lateral; Compact (teléfono) usa una columna o barra inferior."},
+{id:50,u:"Unidad 4",t:"mc",q:"¿En qué capa vive el UiState que se dibuja con Text?",
+ o:["Capa de datos","Capa de dominio","Capa de UI, expuesto desde el ViewModel","Repositoritorio"],a:2,
+ e:"El <b>UiState</b> pertenece a la UI: el ViewModel lo expone (StateFlow) y el componible lo dibuja."}
+];
+
+/* ================= ESTADO ================= */
+let S = { list:[], idx:0, answers:{}, feedback:true, started:false, finished:false, t0:0, mode:'all' };
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; };
+
+function loadStats(){
+  let best = localStorage.getItem('sim_best'), tries = localStorage.getItem('sim_tries'),
+      wrong = localStorage.getItem('sim_wrong');
+  $('stBest').textContent = best ? best : '—';
+  $('stTries').textContent = tries ? tries : 0;
+  const w = wrong ? JSON.parse(wrong) : [];
+  $('stWrong').textContent = w.length;
+  $('wrongBadge').textContent = w.length + ' pendientes';
+  $('btnWrong').disabled = w.length === 0;
+  $('btnWrong').style.opacity = w.length === 0 ? .4 : 1;
+}
+
+function show(id){
+  document.querySelectorAll('main section').forEach(s=>s.classList.remove('show'));
+  $(id).classList.add('show');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  $('nav-'+(id==='home'?'home':id==='teo'?'teo':id==='quiz'?'quiz':'res')).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+/* ---- preparar preguntas: copia + mezclar opciones ---- */
+function prepare(src){
+  return src.map(q=>{
+    const idxs = shuffle(q.o.map((_,i)=>i));
+    return {...q, o: idxs.map(i=>q.o[i]), a: idxs.indexOf(q.a)};
+  });
+}
+function getWrongIds(){ try{ return JSON.parse(localStorage.getItem('sim_wrong')||'[]'); }catch(e){ return []; } }
+
+function startQuiz(mode){
+  let src = ALL;
+  if(mode === 'wrong'){
+    const w = getWrongIds();
+    src = ALL.filter(q=>w.includes(q.id));
+    if(src.length === 0){ alert('No hay preguntas falladas pendientes. ¡Haz un simulacro completo!'); return; }
+  }
+  S = { list: prepare(src), idx:0, answers:{}, feedback:$('fb').checked,
+        started:true, finished:false, t0:Date.now(), mode:mode };
+  $('quizStart').style.display='none';
+  $('quizRun').style.display='block';
+  show('quiz');
+  renderQ();
+}
+
+function renderQ(){
+  const q = S.list[S.idx], total = S.list.length;
+  $('qPos').textContent = `Pregunta ${S.idx+1} / ${total}`;
+  $('qUnit').textContent = q.u;
+  $('qBar').style.width = (S.idx/total*100) + '%';
+  $('qTags').innerHTML = `<span class="tag">${q.u}</span>` +
+    (q.t==='vf' ? '<span class="tag t2">Verdadero / Falso</span>' : '<span class="tag t2">Opción múltiple</span>');
+  $('qText').innerHTML = esc(q.q);
+  if(q.c){ $('qCode').style.display='block'; $('qCode').textContent = q.c; }
+  else $('qCode').style.display='none';
+
+  const picked = S.answers[q.id];
+  const box = $('qOpts'); box.innerHTML='';
+  q.o.forEach((opt,i)=>{
+    const b = document.createElement('button');
+    b.className = 'opt'; b.innerHTML = `<b>${'ABCD'[i]})</b> ${esc(opt)}`;
+    b.onclick = ()=>pick(i);
+    if(picked === i) b.classList.add('sel');
+    if(S.feedback && picked !== undefined){
+      b.disabled = true;
+      if(i === q.a) b.classList.add('ok');
+      else if(i === picked) b.classList.add('bad');
+    }
+    box.appendChild(b);
+  });
+
+  const exp = $('qExp');
+  exp.classList.remove('show','good');
+  if(S.feedback && picked !== undefined){
+    const ok = picked === q.a;
+    exp.innerHTML = (ok ? '✅ <b>¡Correcto!</b> ' : '❌ <b>Incorrecto.</b> Respuesta: <b>' +
+      esc(q.o[q.a]) + '</b>. ') + '<br>' + q.e;
+    exp.classList.add('show'); if(ok) exp.classList.add('good');
+  } else exp.innerHTML = q.e;
+
+  $('btnPrev').disabled = S.idx === 0;
+  $('btnNext').textContent = (S.idx === total-1) ? '🏁 Ver resultados' : 'Siguiente →';
+  $('btnNext').disabled = picked === undefined;
+}
+
+function pick(i){
+  const q = S.list[S.idx];
+  S.answers[q.id] = i;
+  renderQ();
+}
+function nextQ(){
+  if(S.idx === S.list.length-1){ finish(); return; }
+  S.idx++; renderQ(); window.scrollTo(0,0);
+}
+function prevQ(){ if(S.idx>0){ S.idx--; renderQ(); window.scrollTo(0,0);} }
+
+/* ---- resultados ---- */
+function finish(){
+  S.finished = true;
+  const list = S.list;
+  let ok = 0; const wrongIds = [], wrongObjs = [];
+  list.forEach(q=>{
+    if(S.answers[q.id] === q.a) ok++;
+    else { wrongIds.push(q.id); wrongObjs.push(q); }
+  });
+  const total = list.length, pct = Math.round(ok/total*100);
+  const mins = Math.max(1, Math.round((Date.now()-S.t0)/60000));
+
+  // stats locales
+  if(S.mode === 'all'){
+    const tries = (parseInt(localStorage.getItem('sim_tries')||'0')+1);
+    localStorage.setItem('sim_tries', tries);
+    const best = parseInt(localStorage.getItem('sim_best')||'0');
+    if(pct > best) localStorage.setItem('sim_best', pct);
+    localStorage.setItem('sim_wrong', JSON.stringify(wrongIds));
+  } else {
+    // reemplaza falladas por las nuevas
+    const prev = getWrongIds().filter(id=>!wrongIds.includes(id)).concat(wrongIds);
+    localStorage.setItem('sim_wrong', JSON.stringify(prev));
+  }
+
+  // UI
+  $('rOk').textContent = ok; $('rBad').textContent = wrongIds.length; $('rTime').textContent = mins + ' min';
+  $('scoreNum').textContent = pct + '%';
+  $('scoreTxt').textContent = ok + '/' + total;
+  const circle = $('scoreCircle');
+  circle.className = 'score ' + (pct>=70 ? 'pass' : 'fail');
+  $('verdict').innerHTML = pct>=70
+    ? '🎉 <b style="color:var(--ok)">¡APROBATORIO!</b> Sigue repasando para no perder puntos.'
+    : '📚 <b style="color:var(--bad)">Aún no llegas.</b> Repasa la teoría de las unidades débiles y repite.';
+
+  // por unidad
+  const units = {};
+  list.forEach(q=>{
+    units[q.u] = units[q.u] || {ok:0, tot:0};
+    units[q.u].tot++;
+    if(S.answers[q.id] === q.a) units[q.u].ok++;
+  });
+  $('unitStats').innerHTML = Object.keys(units).map(u=>{
+    const d = units[u], p = Math.round(d.ok/d.tot*100);
+    return `<div class="unitrow"><span>${u}</span>
+      <div class="unitbar"><i style="width:${p}%; background:${p>=70?'var(--ok)':p>=40?'var(--warn)':'var(--bad)'}"></i></div>
+      <span style="width:56px; text-align:right">${d.ok}/${d.tot}</span></div>`;
+  }).join('');
+
+  // lista de falladas
+  if(wrongObjs.length === 0){
+    $('wrongList').innerHTML = '<div class="wrong" style="border-color:var(--ok)">🎉 ¡Ninguna pregunta fallada! Dominas el simulacro.</div>';
+  } else {
+    $('wrongList').innerHTML = wrongObjs.map(q=>{
+      const mine = S.answers[q.id];
+      return `<div class="wrong">
+        <div class="wq">${esc(q.id)}. ${esc(q.q)}</div>
+        ${q.c ? `<pre>${esc(q.c)}</pre>` : ''}
+        <div class="wa">Tu respuesta: ${mine!==undefined ? esc(q.o[mine]) : '(sin responder)'}</div>
+        <div class="wr">Correcta: ${esc(q.o[q.a])}</div>
+        <div class="we">${q.e}</div></div>`;
+    }).join('');
+  }
+
+  $('quizRun').style.display='none';
+  $('quizStart').style.display='none';
+  $('resEmpty').style.display='none';
+  $('resFull').style.display='block';
+  loadStats();
+  show('res');
+}
+
+/* si entran a Inicio y no hay simulacro activo, muestra pantalla de arranque */
+document.addEventListener('DOMContentLoaded', ()=>{
+  loadStats();
+  if(getWrongIds().length === 0)
+    $('wrongCard').textContent = 'Primero haz un simulacro; luego repites aquí solo las falladas.';
+});
+</script>
+</body>
+</html>
